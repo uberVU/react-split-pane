@@ -29,7 +29,7 @@ export default React.createClass({
         }
         const prefixed = VendorPrefix.prefix({styles: style});
 
-        return <div style={prefixed.styles}>{this.props.children}</div>;
+        return <div className={this.props.className} style={prefixed.styles}>{this.props.children}</div>;
     }
 });
 

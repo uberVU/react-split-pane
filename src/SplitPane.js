@@ -139,10 +139,10 @@ export default React.createClass({
         const prefixed = VendorPrefix.prefix({styles: style});
 
         return (
-            <div style={prefixed.styles} ref="splitPane">
-                <Pane ref="pane1" key="pane1" split={split}>{children[0]}</Pane>
-                <Resizer className={this.props.className} ref="resizer" key="resizer" onMouseDown={this.onMouseDown} split={split} />
-                <Pane ref="pane2" key="pane2" split={split}>{children[1]}</Pane>
+            <div className={this.props.className} style={prefixed.styles} ref="splitPane">
+                <Pane className={this.props.paneClassName} ref="pane1" key="pane1" split={split}>{children[0]}</Pane>
+                <Resizer className={this.props.resizerClassName} ref="resizer" key="resizer" onMouseDown={this.onMouseDown} split={split} />
+                <Pane className={this.props.paneClassName} ref="pane2" key="pane2" split={split}>{children[1]}</Pane>
             </div>
         );
     }
