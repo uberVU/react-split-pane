@@ -9,7 +9,7 @@ import asserter from './assertions/Asserter';
 describe('Default SplitPane', function () {
 
     const splitPane = (
-        <SplitPane>
+        <SplitPane className='SplitPane' paneClassName='Pane' resizerClassName='Resizer'>
             <div>one</div>
             <div>two</div>
         </SplitPane>
@@ -19,12 +19,6 @@ describe('Default SplitPane', function () {
     it('should render the child panes', function () {
          asserter(splitPane).assertPaneContents(['one', 'two']);
     });
-
-
-    it('should have vertical orientation', function () {
-         asserter(splitPane).assertOrientation('vertical');
-    });
-
 
     it('should contain a Resizer', function () {
          asserter(splitPane).assertContainsResizer();
