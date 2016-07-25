@@ -77,6 +77,10 @@ export default React.createClass({
                         resized: true
                     });
 
+                    if (this.props.onChange) {
+                        this.props.onChange(newSize);
+                    }
+
                     if (newSize >= this.props.minSize) {
                         ref.setState({
                             size: newSize
