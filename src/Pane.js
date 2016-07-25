@@ -11,19 +11,15 @@ export default React.createClass({
         return {};
     },
 
-
     render() {
-        const split = this.props.split;
-        const classes = ['Pane', split];
-
         let style = {
             flex: 1,
             position: 'relative',
             outline: 'none',
-            overflow: 'auto'
+            overflow: 'none'
         };
         if (this.state.size) {
-            if (split === 'horizontal') {
+            if (this.props.split === 'horizontal') {
                 style.height = this.state.size;
                 style.display = 'flex';
             } else {
@@ -33,7 +29,7 @@ export default React.createClass({
         }
         const prefixed = VendorPrefix.prefix({styles: style});
 
-        return <div className={classes.join(' ')} style={prefixed.styles}>{this.props.children}</div>;
+        return <div className={this.props.className} style={prefixed.styles}>{this.props.children}</div>;
     }
 });
 

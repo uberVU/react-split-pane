@@ -11,7 +11,10 @@ describe('Horizontal SplitPane', function () {
     describe('Defaults', function () {
 
         const splitPane = (
-            <SplitPane split="horizontal">
+            <SplitPane className='SplitPane horizontal'
+                    paneClassName='Pane' 
+                    resizerClassName='Resizer'
+                    split='horizontal'>
                 <div>one</div>
                 <div>two</div>
             </SplitPane>
@@ -43,7 +46,11 @@ describe('Horizontal SplitPane', function () {
     describe('With defaultSize property', function () {
 
         const splitPane = (
-            <SplitPane split="horizontal" defaultSize="99" >
+            <SplitPane className='SplitPane horizontal'
+                    paneClassName='Pane' 
+                    resizerClassName='Resizer'
+                    split='horizontal'
+                    defaultSize='99'>
                 <div>one</div>
                 <div>two</div>
             </SplitPane>

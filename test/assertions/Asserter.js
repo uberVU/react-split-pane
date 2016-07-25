@@ -6,10 +6,7 @@ const { TestUtils } = React.addons;
 const expect = chai.expect;
 import VendorPrefix from 'react-vendor-prefix';
 
-
-
 export default (jsx) => {
-
 
     const splitPane = TestUtils.renderIntoDocument(jsx);
     const component = TestUtils.findRenderedDOMComponentWithClass(splitPane, 'SplitPane');
@@ -26,7 +23,7 @@ export default (jsx) => {
 
 
     const findResizer = () => {
-        return TestUtils.scryRenderedComponentsWithType(splitPane, Resizer);
+        return TestUtils.scryRenderedDOMComponentsWithClass(splitPane, 'Resizer');
     };
 
 
