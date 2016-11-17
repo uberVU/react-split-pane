@@ -5,6 +5,7 @@ import Pane from './Pane';
 import Resizer from './Resizer';
 import VendorPrefix from 'react-vendor-prefix';
 
+var ReactDOM = require('react-dom-polyfill')(React);
 
 export default React.createClass({
 
@@ -62,7 +63,8 @@ export default React.createClass({
         if (this.state.active) {
             const ref = this.refs.pane1;
             if (ref) {
-                const node = ref.getDOMNode();
+                const node = ReactDOM.findDOMNode(ref);
+
                 if (window.getComputedStyle) {
                     const styles = window.getComputedStyle(node);
                     const width = styles.width.replace('px', '');
@@ -151,5 +153,3 @@ export default React.createClass({
         );
     }
 });
-
-
