@@ -6,9 +6,9 @@ var Example = React.createClass({
 
     render: function() {
         return (
-            <SplitPane split="vertical" minSize="50" defaultSize="100">
+            <SplitPane resizerClassName="Resizer vertical" split="vertical" minSize="50" defaultSize="100">
                 <div></div>
-                <SplitPane split="horizontal">
+                <SplitPane resizerClassName="Resizer horizontal" split="horizontal">
                     <div></div>
                     <div></div>
                 </SplitPane>
