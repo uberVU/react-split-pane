@@ -1,13 +1,13 @@
 import React from 'react';
-import SplitPane from '../src/SplitPane';
-import Resizer from '../src/Resizer';
-import asserter from './assertions/Asserter';
 import chai from 'chai';
 import spies from 'chai-spies';
 
+import SplitPane from '../src/SplitPane';
+import asserter from './assertions/Asserter';
+
 chai.use(spies);
 
-describe('Default SplitPane', function () {
+describe('Default SplitPane', () => {
 
     const splitPane = (
         <SplitPane>
@@ -17,22 +17,22 @@ describe('Default SplitPane', function () {
     );
 
 
-    it('should render the child panes', function () {
-         asserter(splitPane).assertPaneContents(['one', 'two']);
+    it('should render the child panes', () => {
+        asserter(splitPane).assertPaneContents(['one', 'two']);
     });
 
-    it('should have vertical orientation', function () {
-         asserter(splitPane).assertOrientation('vertical');
+    it('should have vertical orientation', () => {
+        asserter(splitPane).assertOrientation('vertical');
     });
 
-    it('should contain a Resizer', function () {
-         asserter(splitPane).assertContainsResizer();
+    it('should contain a Resizer', () => {
+        asserter(splitPane).assertContainsResizer();
     });
 
 });
 
 
-describe('SplitPane can have a specific class', function () {
+describe('SplitPane can have a specific class', () => {
 
     const splitPane = (
         <SplitPane className="some-class">
@@ -42,21 +42,24 @@ describe('SplitPane can have a specific class', function () {
     );
 
 
-    it('should have the specified class', function () {
+    it('should have the specified class', () => {
         asserter(splitPane).assertSplitPaneClass('some-class');
     });
 
 });
 
 
-describe('SplitPane can have resizing callbacks', function () {
-    const onDragStartedCallback = chai.spy(function() { });
-    const onDragFinishedCallback = chai.spy(function() { });
+describe('SplitPane can have resizing callbacks', () => {
+    const onDragStartedCallback = chai.spy(() => {
+    });
+    const onDragFinishedCallback = chai.spy(() => {
+    });
 
     const splitPane = (
-        <SplitPane className="some-class"
-          onDragStarted = { onDragStartedCallback }
-          onDragFinished = { onDragFinishedCallback }
+        <SplitPane
+            className="some-class"
+            onDragStarted={onDragStartedCallback}
+            onDragFinished={onDragFinishedCallback}
         >
             <div>one</div>
             <div>two</div>
@@ -64,17 +67,17 @@ describe('SplitPane can have resizing callbacks', function () {
     );
 
 
-    it('should call callbacks on resizing', function () {
+    it('should call callbacks on resizing', () => {
         asserter(splitPane).assertResizeCallbacks(
-          onDragStartedCallback,
-          onDragFinishedCallback
+            onDragStartedCallback,
+            onDragFinishedCallback
         );
     });
 
 });
 
 
-describe('Internal Panes have class', function () {
+describe('Internal Panes have class', () => {
 
     const splitPane = (
         <SplitPane className="some-class">
@@ -84,8 +87,25 @@ describe('Internal Panes have class', function () {
     );
 
 
-    it('should have the specified classname', function () {
+    it('should have the specified classname', () => {
         asserter(splitPane).assertPaneClasses('Pane1', 'Pane2');
+    });
+
+});
+
+
+describe('Internal Resizer have class', () => {
+
+    const splitPane = (
+        <SplitPane resizerClassName="some-class">
+            <div>one</div>
+            <div>two</div>
+        </SplitPane>
+    );
+
+
+    it('should have the specified classname', () => {
+        asserter(splitPane).assertResizerClasses('some-class');
     });
 
 });
