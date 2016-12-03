@@ -1,5 +1,4 @@
 import React, { Component, PropTypes } from 'react';
-import ReactDOM from 'react-dom';
 import Prefixer from 'inline-style-prefixer';
 import stylePropType from 'react-style-proptype';
 
@@ -7,6 +6,8 @@ import Pane from './Pane';
 import Resizer from './Resizer';
 
 const USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.2 (KHTML, like Gecko) Safari/537.2';
+
+const ReactDOM = require('react-dom-polyfill')(React);
 
 function unFocus(document, window) {
     if (document.selection) {
