@@ -1,155 +1,319 @@
-'use strict';
+import React, { Component, PropTypes } from 'react';
+import Prefixer from 'inline-style-prefixer';
+import stylePropType from 'react-style-proptype';
 
-import React from 'react';
 import Pane from './Pane';
 import Resizer from './Resizer';
-import VendorPrefix from 'react-vendor-prefix';
 
-var ReactDOM = require('react-dom-polyfill')(React);
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 6.1) AppleWebKit/537.2 (KHTML, like Gecko) Safari/537.2';
 
-export default React.createClass({
+const ReactDOM = require('react-dom-polyfill')(React);
 
+function unFocus(document, window) {
+    if (document.selection) {
+        document.selection.empty();
+    } else {
+        try {
+            window.getSelection().removeAllRanges();
+        // eslint-disable-next-line no-empty
+        } catch (e) {}
+    }
+}
 
-    propTypes: {
-        //minSize: React.PropTypes.number,
-        //defaultSize: React.PropTypes.number,
-        //split: React.PropTypes.string
-    },
+class SplitPane extends Component {
+    constructor(...args) {
+        super(...args);
 
+        this.onMouseDown = this.onMouseDown.bind(this);
+        this.onTouchStart = this.onTouchStart.bind(this);
+        this.onMouseMove = this.onMouseMove.bind(this);
+        this.onTouchMove = this.onTouchMove.bind(this);
+        this.onMouseUp = this.onMouseUp.bind(this);
 
-    getInitialState() {
-        return {
+        this.state = {
             active: false,
-            resized: false
+            resized: false,
         };
-    },
-
-
-    getDefaultProps() {
-        return {
-            minSize: 0
-        };
-    },
-
+    }
 
     componentDidMount() {
+        this.setSize(this.props, this.state);
         document.addEventListener('mouseup', this.onMouseUp);
         document.addEventListener('mousemove', this.onMouseMove);
-        const ref = this.refs.pane1;
-        if (ref && this.props.defaultSize && !this.state.resized) {
-            ref.setState({
-                size: this.props.defaultSize
-            });
-        }
-    },
+        document.addEventListener('touchmove', this.onTouchMove);
+    }
 
+    componentWillReceiveProps(props) {
+        this.setSize(props, this.state);
+    }
 
     componentWillUnmount() {
         document.removeEventListener('mouseup', this.onMouseUp);
         document.removeEventListener('mousemove', this.onMouseMove);
-    },
-
+        document.removeEventListener('touchmove', this.onTouchMove);
+    }
 
     onMouseDown(event) {
-        let position = this.props.split === 'vertical' ? event.clientX : event.clientY;
-        this.setState({
-            active: true,
-            position: position
-        });
-    },
+        const eventWithTouches = Object.assign(
+            {},
+            event,
+            { touches: [{ clientX: event.clientX, clientY: event.clientY }] },
+        );
+        this.onTouchStart(eventWithTouches);
+    }
 
+    onTouchStart(event) {
+        if (this.props.allowResize) {
+            unFocus(document, window);
+            const position = this.props.split === 'vertical' ? event.touches[0].clientX : event.touches[0].clientY;
+            if (typeof this.props.onDragStarted === 'function') {
+                this.props.onDragStarted();
+            }
+            this.setState({
+                active: true,
+                position,
+            });
+        }
+    }
 
     onMouseMove(event) {
-        if (this.state.active) {
-            const ref = this.refs.pane1;
-            if (ref) {
-                const node = ReactDOM.findDOMNode(ref);
+        const eventWithTouches = Object.assign(
+            {},
+            event,
+            { touches: [{ clientX: event.clientX, clientY: event.clientY }] },
+        );
+        this.onTouchMove(eventWithTouches);
+    }
 
-                if (window.getComputedStyle) {
-                    const styles = window.getComputedStyle(node);
-                    const width = styles.width.replace('px', '');
-                    const height = styles.height.replace('px', '');
-                    const current = this.props.split === 'vertical' ? event.clientX : event.clientY;
-                    const size = this.props.split === 'vertical' ? width : height;
-                    const position = this.state.position;
+    onTouchMove(event) {
+        if (this.props.allowResize) {
+            if (this.state.active) {
+                unFocus(document, window);
+                const isPrimaryFirst = this.props.primary === 'first';
+                const ref = isPrimaryFirst ? this.pane1 : this.pane2;
+                if (ref) {
+                    const node = ReactDOM.findDOMNode(ref);
 
-                    const newSize = size - (position - current);
-                    this.setState({
-                        position: current,
-                        resized: true
-                    });
+                    if (node.getBoundingClientRect) {
+                        const width = node.getBoundingClientRect().width;
+                        const height = node.getBoundingClientRect().height;
+                        const current = this.props.split === 'vertical'
+                            ? event.touches[0].clientX
+                            : event.touches[0].clientY;
+                        const size = this.props.split === 'vertical'
+                            ? width
+                            : height;
+                        const position = this.state.position;
+                        const newPosition = isPrimaryFirst ? (position - current) : (current - position);
 
-                    if (this.props.onChange) {
-                        this.props.onChange(newSize);
-                    }
+                        let maxSize = this.props.maxSize;
+                        if ((this.props.maxSize !== undefined) && (this.props.maxSize <= 0)) {
+                            const splPane = this.splitPane;
+                            if (this.props.split === 'vertical') {
+                                maxSize = splPane.getBoundingClientRect().width + this.props.maxSize;
+                            } else {
+                                maxSize = splPane.getBoundingClientRect().height + this.props.maxSize;
+                            }
+                        }
 
-                    if (newSize >= this.props.minSize) {
+                        let newSize = size - newPosition;
+
+                        if (newSize < this.props.minSize) {
+                            newSize = this.props.minSize;
+                        } else if ((this.props.maxSize !== undefined) && (newSize > maxSize)) {
+                            newSize = maxSize;
+                        } else {
+                            this.setState({
+                                position: current,
+                                resized: true,
+                            });
+                        }
+
+                        if (this.props.onChange) {
+                            this.props.onChange(newSize);
+                        }
+                        this.setState({
+                            draggedSize: newSize,
+                        });
                         ref.setState({
-                            size: newSize
+                            size: newSize,
                         });
                     }
                 }
             }
         }
-    },
-
+    }
 
     onMouseUp() {
-        this.setState({
-            active: false
-        });
-    },
-
-
-    merge: function (into, obj) {
-        for (let attr in obj) {
-            into[attr] = obj[attr];
+        if (this.props.allowResize) {
+            if (this.state.active) {
+                if (typeof this.props.onDragFinished === 'function') {
+                    this.props.onDragFinished(this.state.draggedSize);
+                }
+                this.setState({
+                    active: false,
+                });
+            }
         }
-    },
+    }
 
+    setSize(props, state) {
+        const ref = this.props.primary === 'first' ? this.pane1 : this.pane2;
+        let newSize;
+        if (ref) {
+            newSize = props.size || (state && state.draggedSize) || props.defaultSize || props.minSize;
+            ref.setState({
+                size: newSize,
+            });
+            if (props.size !== state.draggedSize) {
+                this.setState({
+                    draggedSize: newSize,
+                });
+            }
+        }
+    }
 
     render() {
+        const { split, allowResize } = this.props;
+        const disabledClass = allowResize ? '' : 'disabled';
 
-        const split = this.props.split || 'vertical';
+        const style = Object.assign({},
+            this.props.style || {}, {
+                display: 'flex',
+                flex: 1,
+                position: 'relative',
+                outline: 'none',
+                overflow: 'hidden',
+                MozUserSelect: 'text',
+                WebkitUserSelect: 'text',
+                msUserSelect: 'text',
+                userSelect: 'text',
+            });
 
-        let style = {
-            display: 'flex',
-            flex: 1,
-            position: 'relative',
-            outline: 'none',
-            overflow: 'hidden',
-            userSelect: 'none'
-        };
-
-        if (split === 'horizontal') {
-            this.merge(style, {
+        if (split === 'vertical') {
+            Object.assign(style, {
+                flexDirection: 'row',
+                height: '100%',
+                position: 'absolute',
+                left: 0,
+                right: 0,
+            });
+        } else {
+            Object.assign(style, {
                 flexDirection: 'column',
                 height: '100%',
                 minHeight: '100%',
                 position: 'absolute',
                 top: 0,
                 bottom: 0,
-                width: '100%'
-            });
-        } else {
-            this.merge(style, {
-                flexDirection: 'row',
-                height: '100%',
-                position: 'absolute',
-                left: 0,
-                right: 0
+                width: '100%',
             });
         }
 
         const children = this.props.children;
-        const prefixed = VendorPrefix.prefix({styles: style});
+        const classes = ['SplitPane', this.props.className, split, disabledClass];
+
+        const pane1Style = this.props.prefixer.prefix(
+            Object.assign({},
+            this.props.paneStyle || {},
+            this.props.pane1Style || {}),
+        );
+
+        const pane2Style = this.props.prefixer.prefix(
+            Object.assign({},
+            this.props.paneStyle || {},
+            this.props.pane2Style || {}),
+        );
 
         return (
-            <div className={this.props.className} style={prefixed.styles} ref="splitPane">
-                <Pane className={this.props.paneClassName} ref="pane1" key="pane1" split={split}>{children[0]}</Pane>
-                <Resizer className={this.props.resizerClassName} ref="resizer" key="resizer" onMouseDown={this.onMouseDown} split={split} />
-                <Pane className={this.props.paneClassName} ref="pane2" key="pane2" split={split}>{children[1]}</Pane>
+            <div
+                className={classes.join(' ')}
+                style={this.props.prefixer.prefix(style)}
+                ref={(node) => { this.splitPane = node; }}
+            >
+
+                <Pane
+                    ref={(node) => { this.pane1 = node; }}
+                    key="pane1" className="Pane1"
+                    style={pane1Style}
+                    split={split}
+                    size={this.props.primary === 'first' ?
+                      this.props.size || this.props.defaultSize || this.props.minSize :
+                      undefined
+                    }
+                >
+                    {children[0]}
+                </Pane>
+                <Resizer
+                    ref={(node) => { this.resizer = node; }}
+                    key="resizer"
+                    className={disabledClass}
+                    resizerClassName={this.props.resizerClassName}
+                    onMouseDown={this.onMouseDown}
+                    onTouchStart={this.onTouchStart}
+                    onTouchEnd={this.onMouseUp}
+                    style={this.props.resizerStyle || {}}
+                    split={split}
+                />
+                <Pane
+                    ref={(node) => { this.pane2 = node; }}
+                    key="pane2"
+                    className="Pane2"
+                    style={pane2Style}
+                    split={split}
+                    size={this.props.primary === 'second' ?
+                      this.props.size || this.props.defaultSize || this.props.minSize :
+                      undefined
+                    }
+                >
+                    {children[1]}
+                </Pane>
             </div>
         );
     }
-});
+}
+
+SplitPane.propTypes = {
+    primary: PropTypes.oneOf(['first', 'second']),
+    minSize: PropTypes.oneOfType([
+        React.PropTypes.string,
+        React.PropTypes.number,
+    ]),
+    maxSize: PropTypes.oneOfType([
+        React.PropTypes.string,
+        React.PropTypes.number,
+    ]),
+    // eslint-disable-next-line react/no-unused-prop-types
+    defaultSize: PropTypes.oneOfType([
+        React.PropTypes.string,
+        React.PropTypes.number,
+    ]),
+    size: PropTypes.oneOfType([
+        React.PropTypes.string,
+        React.PropTypes.number,
+    ]),
+    allowResize: PropTypes.bool,
+    split: PropTypes.oneOf(['vertical', 'horizontal']),
+    onDragStarted: PropTypes.func,
+    onDragFinished: PropTypes.func,
+    onChange: PropTypes.func,
+    prefixer: PropTypes.instanceOf(Prefixer).isRequired,
+    style: stylePropType,
+    resizerStyle: stylePropType,
+    paneStyle: stylePropType,
+    pane1Style: stylePropType,
+    pane2Style: stylePropType,
+    className: PropTypes.string,
+    resizerClassName: PropTypes.string,
+    children: PropTypes.arrayOf(PropTypes.node).isRequired,
+};
+
+SplitPane.defaultProps = {
+    split: 'vertical',
+    minSize: 50,
+    allowResize: true,
+    prefixer: new Prefixer({ userAgent: USER_AGENT }),
+    primary: 'first',
+};
+
+export default SplitPane;
